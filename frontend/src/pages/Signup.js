@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
 
 function Signup() {
@@ -30,15 +25,11 @@ function Signup() {
     try {
       await apiRequest("/auth/send-otp", {
         method: "POST",
-        body: JSON.stringify({
-          email,
-        }),
+        body: JSON.stringify({ email }),
       });
 
       navigate("/verify-email", {
-        state: {
-          email,
-        },
+        state: { email },
       });
     } catch (error) {
       setError(error.message);
@@ -77,20 +68,23 @@ function Signup() {
   }
 
   function handleGoogleSignup() {
-    window.location.href =
-      "http://127.0.0.1:8000/api/auth/google";
+    window.location.href = "http://127.0.0.1:8000/api/auth/google";
   }
 
   return (
     <div className="auth-page">
       <div className="auth-card">
 
+        <div className="brand-mark">
+          AI
+        </div>
+
         <h1>AI Compliance Inspector</h1>
 
         <p className="auth-subtitle">
           {isVerified
-            ? "Complete your account"
-            : "Create your account"}
+            ? "Complete your account setup"
+            : "Create your secure compliance account"}
         </p>
 
         {!isVerified && (
@@ -100,6 +94,7 @@ function Signup() {
               className="google-button"
               onClick={handleGoogleSignup}
             >
+              <span className="google-icon">G</span>
               Continue with Google
             </button>
 
@@ -109,15 +104,17 @@ function Signup() {
 
             <form onSubmit={handleSendOTP}>
 
-              <label>Email</label>
+              <label htmlFor="signup-email">
+                Email address
+              </label>
 
               <input
+                id="signup-email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
                 required
               />
 
@@ -132,9 +129,7 @@ function Signup() {
                 className="primary-button"
                 disabled={loading}
               >
-                {loading
-                  ? "Sending code..."
-                  : "Continue with Email"}
+                {loading ? "Sending code..." : "Continue with Email"}
               </button>
 
             </form>
@@ -144,35 +139,42 @@ function Signup() {
         {isVerified && (
           <form onSubmit={handleRegister}>
 
-            <label>Verified Email</label>
+            <label htmlFor="verified-email">
+              Verified email
+            </label>
 
             <input
+              id="verified-email"
               type="email"
               value={email}
               disabled
             />
 
-            <label>Name</label>
+            <label htmlFor="name">
+              Full name
+            </label>
 
             <input
+              id="name"
               type="text"
               placeholder="Enter your name"
               value={name}
-              onChange={(event) =>
-                setName(event.target.value)
-              }
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
               required
             />
 
-            <label>Password</label>
+            <label htmlFor="new-password">
+              Create password
+            </label>
 
             <input
+              id="new-password"
               type="password"
               placeholder="Create a password"
               value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="new-password"
               required
             />
 
@@ -187,13 +189,16 @@ function Signup() {
               className="primary-button"
               disabled={loading}
             >
-              {loading
-                ? "Creating account..."
-                : "Create Account"}
+              {loading ? "Creating account..." : "Create Account"}
             </button>
 
           </form>
         )}
+
+        <div className="security-note">
+          <span>🔒</span>
+          Your information is securely protected
+        </div>
 
         <p className="auth-footer">
           Already have an account?{" "}

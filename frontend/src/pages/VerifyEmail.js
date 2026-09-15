@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-
 import { apiRequest } from "../services/api";
 
 function VerifyEmail() {
@@ -17,6 +16,12 @@ function VerifyEmail() {
     event.preventDefault();
 
     setError("");
+
+    if (otp.length !== 6) {
+      setError("Please enter the 6-digit verification code.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -45,28 +50,52 @@ function VerifyEmail() {
     <div className="auth-page">
       <div className="auth-card">
 
-        <h1>Verify Email</h1>
+        <div className="brand-mark">
+          ✓
+        </div>
+
+        <h1>Verify your email</h1>
 
         <p className="auth-subtitle">
-          Enter the verification code sent to
+          We've sent a 6-digit verification code to
         </p>
 
-        <p style={{ textAlign: "center" }}>
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "-12px",
+            marginBottom: "25px",
+            color: "#0f172a",
+            fontSize: "14px",
+            wordBreak: "break-word",
+          }}
+        >
           <strong>{email}</strong>
         </p>
 
         <form onSubmit={handleVerify}>
 
-          <label>Verification Code</label>
+          <label htmlFor="otp">
+            Verification code
+          </label>
 
           <input
+            id="otp"
+            className="otp-input"
             type="text"
-            placeholder="Enter 6-digit code"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="000000"
             value={otp}
-            onChange={(event) =>
-              setOtp(event.target.value)
-            }
+            onChange={(event) => {
+              const value = event.target.value
+                .replace(/\D/g, "")
+                .slice(0, 6);
+
+              setOtp(value);
+            }}
             maxLength="6"
+            autoComplete="one-time-code"
             required
           />
 
@@ -81,16 +110,19 @@ function VerifyEmail() {
             className="primary-button"
             disabled={loading}
           >
-            {loading
-              ? "Verifying..."
-              : "Verify Email"}
+            {loading ? "Verifying..." : "Verify Email"}
           </button>
 
         </form>
 
+        <div className="security-note">
+          <span>✉</span>
+          Check your inbox for the verification code
+        </div>
+
         <p className="auth-footer">
           <Link to="/signup">
-            Back to Sign Up
+            ← Back to Sign Up
           </Link>
         </p>
 

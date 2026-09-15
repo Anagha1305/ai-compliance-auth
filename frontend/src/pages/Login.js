@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -9,7 +8,6 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +19,6 @@ function Login() {
 
     try {
       await login(email, password);
-
       navigate("/");
     } catch (error) {
       setError(error.message);
@@ -31,18 +28,21 @@ function Login() {
   }
 
   function handleGoogleLogin() {
-    window.location.href =
-      "http://127.0.0.1:8000/api/auth/google";
+    window.location.href = "http://127.0.0.1:8000/api/auth/google";
   }
 
   return (
     <div className="auth-page">
       <div className="auth-card">
 
+        <div className="brand-mark">
+          AI
+        </div>
+
         <h1>AI Compliance Inspector</h1>
 
         <p className="auth-subtitle">
-          Sign in to continue
+          Securely sign in to your compliance workspace
         </p>
 
         <button
@@ -50,6 +50,7 @@ function Login() {
           className="google-button"
           onClick={handleGoogleLogin}
         >
+          <span className="google-icon">G</span>
           Continue with Google
         </button>
 
@@ -59,27 +60,31 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
 
-          <label>Email</label>
+          <label htmlFor="email">
+            Email address
+          </label>
 
           <input
+            id="email"
             type="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
             required
           />
 
-          <label>Password</label>
+          <label htmlFor="password">
+            Password
+          </label>
 
           <input
+            id="password"
             type="password"
             placeholder="Enter your password"
             value={password}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
             required
           />
 
@@ -99,10 +104,15 @@ function Login() {
 
         </form>
 
+        <div className="security-note">
+          <span>🔒</span>
+          Secure authentication
+        </div>
+
         <p className="auth-footer">
           Don't have an account?{" "}
           <Link to="/signup">
-            Sign Up
+            Create an account
           </Link>
         </p>
 

@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
 
 function Landing() {
@@ -7,42 +6,50 @@ function Landing() {
   const { user, logout } = useAuth();
 
   async function handleLogout() {
-    await logout();
-    navigate("/login");
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   }
 
   return (
     <div className="landing-page">
-
       <div className="landing-card">
 
-        <h1>Welcome!</h1>
+        <div className="landing-icon">
+          ✓
+        </div>
+
+        <h1>Welcome to AI Compliance Inspector</h1>
+
+        <p className="landing-description">
+          Your account has been successfully authenticated.
+          You are ready to access the compliance inspection workspace.
+        </p>
 
         {user && (
-          <>
-            <p>
-              Hello, <strong>{user.name}</strong>
-            </p>
-
-            <p>
-              You are successfully authenticated.
+          <div className="user-info">
+            <p className="user-name">
+              {user.name}
             </p>
 
             <p className="user-email">
               {user.email}
             </p>
-          </>
+          </div>
         )}
 
         <div className="landing-actions">
 
           <button
-            className="primary-button"
+            className="primary-button continue-button"
             onClick={() =>
-              alert("Project dashboard will be integrated later.")
+              alert("Compliance workspace will be integrated here.")
             }
           >
-            Continue to Project
+            Continue to Workspace
           </button>
 
           <button
@@ -54,8 +61,12 @@ function Landing() {
 
         </div>
 
-      </div>
+        <div className="security-note">
+          <span>🔒</span>
+          Secure session active
+        </div>
 
+      </div>
     </div>
   );
 }
