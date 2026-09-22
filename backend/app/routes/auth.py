@@ -2,7 +2,7 @@ import os
 
 from fastapi import APIRouter, HTTPException, Response, Depends, Request
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 
 from app.services.google_auth import oauth
 
@@ -10,9 +10,15 @@ from app.services.user_service import (
     get_user_by_email,
     create_user,
     create_google_user,
+    validate_role,
+    validate_role_identity,
 )
 
 from app.services.jwt_service import create_access_token
+from app.services.oauth_context_service import (
+    consume_google_auth_context,
+    create_google_auth_context,
+)
 
 from app.services.otp_service import (
     create_otp,
@@ -50,11 +56,36 @@ class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
+    role: str
+    government_id: str | None = None
+    company_id: str | None = None
+
+    @model_validator(mode="after")
+    def validate_identity_fields(self):
+        try:
+            role, government_id, company_id = validate_role_identity(
+                self.role, self.government_id, self.company_id
+            )
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+        self.role = role
+        self.government_id = government_id
+        self.company_id = company_id
+        return self
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    role: str
+
+    @model_validator(mode="after")
+    def validate_role(self):
+        try:
+            self.role = validate_role(self.role)
+        except ValueError as exc:
+            raise ValueError("Please select a valid account type.") from exc
+        return self
 
 
 # ============================================================
@@ -145,6 +176,9 @@ def register(
         name=request.name,
         email=email,
         password_hash=password_hash,
+        role=request.role,
+        government_id=request.government_id,
+        company_id=request.company_id,
     )
 
     # 5. Remove temporary email verification record
@@ -152,7 +186,7 @@ def register(
 
     # 6. Create JWT
     access_token = create_access_token(
-        str(user["_id"])
+        str(user["_id"]), user["role"]
     )
 
     # 7. Store JWT in HttpOnly cookie
@@ -207,9 +241,16 @@ def login(
             detail="Invalid email or password"
         )
 
+    # The selected role is part of the login credential, not a UI preference.
+    if user.get("role") != request.role:
+        raise HTTPException(
+            status_code=401,
+            detail="This account is registered under a different account type. Please select the correct account type.",
+        )
+
     # 3. Create JWT
     access_token = create_access_token(
-        str(user["_id"])
+        str(user["_id"]), user.get("role")
     )
 
     # 4. Store JWT in HttpOnly cookie
@@ -228,7 +269,7 @@ def login(
             "id": str(user["_id"]),
             "name": user["name"],
             "email": user["email"],
-            "role": user["role"],
+            "role": user.get("role"),
             "auth_provider": user["auth_provider"],
             "email_verified": user["email_verified"],
         }
@@ -248,7 +289,7 @@ def get_me(
         "id": str(current_user["_id"]),
         "name": current_user["name"],
         "email": current_user["email"],
-        "role": current_user["role"],
+        "role": current_user.get("role"),
         "auth_provider": current_user["auth_provider"],
         "email_verified": current_user["email_verified"],
     }
@@ -269,7 +310,7 @@ def protected_test(
             "id": str(current_user["_id"]),
             "name": current_user["name"],
             "email": current_user["email"],
-            "role": current_user["role"],
+            "role": current_user.get("role"),
         }
     }
 
@@ -295,7 +336,34 @@ def logout(response: Response):
 # ============================================================
 
 @router.get("/google")
-async def google_login(request: Request):
+async def google_login(
+    request: Request,
+    role: str | None = None,
+    mode: str = "login",
+    government_id: str | None = None,
+    company_id: str | None = None,
+):
+
+    if mode not in {"login", "signup"}:
+        raise HTTPException(status_code=422, detail="Invalid Google authentication flow.")
+
+    try:
+        if mode == "signup":
+            role, government_id, company_id = validate_role_identity(
+                role or "", government_id, company_id
+            )
+        else:
+            role = validate_role(role or "")
+            government_id = None
+            company_id = None
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Please select a valid account type.") from exc
+
+    # The cookie contains only this opaque reference. Role-specific IDs stay
+    # server-side, while Authlib retains its OAuth CSRF state in the session.
+    request.session["google_auth_context_id"] = create_google_auth_context(
+        role, mode, government_id, company_id
+    )
 
     redirect_uri = os.getenv(
         "GOOGLE_REDIRECT_URI"
@@ -323,16 +391,10 @@ async def google_callback(
             request
         )
 
-    except Exception as e:
-
-        print(
-            "GOOGLE OAUTH ERROR:",
-            repr(e)
-        )
-
+    except Exception:
         raise HTTPException(
             status_code=400,
-            detail=f"Google authentication failed: {str(e)}"
+            detail="Google authentication failed"
         )
 
     # 2. Get Google user information
@@ -357,28 +419,58 @@ async def google_callback(
 
     email = email.lower()
 
+    if user_info.get("email_verified") is not True:
+        raise HTTPException(
+            status_code=400,
+            detail="Google account email has not been verified",
+        )
+
     # 4. Check whether user already exists
     user = get_user_by_email(email)
 
+    auth_context = consume_google_auth_context(
+        request.session.pop("google_auth_context_id", None)
+    )
+    if not auth_context:
+        raise HTTPException(
+            status_code=400,
+            detail="Google sign-in session has expired. Please try again.",
+        )
+
     if user:
+
+        if user.get("role") != auth_context["role"]:
+            raise HTTPException(
+                status_code=401,
+                detail="This account is registered under a different account type. Please select the correct account type.",
+            )
 
         # Existing user
         user_id = str(user["_id"])
 
     else:
 
+        if auth_context["mode"] != "signup":
+            raise HTTPException(
+                status_code=422,
+                detail="This Google account is not registered. Create an account first.",
+            )
+
         # 5. Create new Google user
         user = create_google_user(
             name=name or "Google User",
             email=email,
             google_sub=google_sub,
+            role=auth_context["role"],
+            government_id=auth_context.get("government_id"),
+            company_id=auth_context.get("company_id"),
         )
 
         user_id = str(user["_id"])
 
     # 6. Create JWT
     access_token = create_access_token(
-        user_id
+        user_id, user.get("role")
     )
 
     # 7. Redirect to frontend

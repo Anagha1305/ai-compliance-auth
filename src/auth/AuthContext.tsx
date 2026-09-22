@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { apiRequest, type AuthUser } from './api'
+import type { AuthRole } from '../pages/auth/RoleSelector'
 
-type AuthContextValue = { user: AuthUser | null; loading: boolean; login: (email: string, password: string) => Promise<void>; logout: () => Promise<void>; refresh: () => Promise<void> }
+type AuthContextValue = { user: AuthUser | null; loading: boolean; login: (email: string, password: string, role: AuthRole) => Promise<void>; logout: () => Promise<void>; refresh: () => Promise<void> }
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -12,8 +13,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { setUser(await apiRequest<AuthUser>('/auth/me')) } catch { setUser(null) } finally { setLoading(false) }
   }
   useEffect(() => { void refresh() }, [])
-  const login = async (email: string, password: string) => {
-    const data = await apiRequest<{ user: AuthUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+  const login = async (email: string, password: string, role: AuthRole) => {
+    const data = await apiRequest<{ user: AuthUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password, role }) })
     setUser(data.user)
   }
   const logout = async () => { await apiRequest('/auth/logout', { method: 'POST' }); setUser(null) }
