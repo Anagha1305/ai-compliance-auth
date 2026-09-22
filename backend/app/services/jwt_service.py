@@ -15,7 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
 )
 
 
-def create_access_token(user_id: str):
+def create_access_token(user_id: str, role: str | None = None):
     now = datetime.now(timezone.utc)
 
     expire = now + timedelta(
@@ -28,6 +28,8 @@ def create_access_token(user_id: str):
         "iat": now,
         "exp": expire,
     }
+    if role is not None:
+        payload["role"] = role
 
     token = jwt.encode(
         payload,

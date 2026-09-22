@@ -52,6 +52,4 @@ def get_current_user(request: Request):
             detail="User not found"
         )
 
-    print("DEBUG USER FROM MONGODB:", user)
-
     return user
