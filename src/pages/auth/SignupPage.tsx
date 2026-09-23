@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiRequest } from '../../auth/api'
 import { useAuth } from '../../auth/AuthContext'
 import { AuthError, AuthLayout } from './AuthLayout'
+import { PasswordInput } from './PasswordInput'
 import { RoleSelector, type AuthRole } from './RoleSelector'
 
 type SignupState = { email?: string; verified?: boolean; role?: AuthRole; governmentId?: string; companyId?: string }
@@ -48,21 +49,21 @@ export function SignupPage() {
     window.location.assign(`http://127.0.0.1:8000/api/auth/google?${params}`)
   }
 
-  return <AuthLayout eyebrow="Create an account" title={verified ? 'Complete your profile' : 'Secure your workspace'} description={verified ? 'Your email has been verified. Add your details to finish registration.' : 'Choose an account type, then verify your email to begin.'}>
+  return <AuthLayout eyebrow={verified ? 'Email verified' : undefined} title={verified ? 'Complete your profile' : undefined} description={verified ? 'Add your details to finish registration.' : undefined}>
     {!verified ? <div className="mb-6 space-y-4">
       <p className="text-sm font-medium text-ink">Choose your account type</p>
       <RoleSelector value={role} onChange={(selectedRole) => { setRole(selectedRole); setError('') }} />
-      {role === 'officer' ? <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Government ID<input required value={governmentId} onChange={(e) => setGovernmentId(e.target.value)} placeholder="GOV-123456" className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand" /></label> : null}
-      {role === 'manufacturer' ? <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Company ID<input required value={companyId} onChange={(e) => setCompanyId(e.target.value)} placeholder="COMP-123456" className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand" /></label> : null}
+      {role === 'officer' ? <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Government ID<input required value={governmentId} onChange={(e) => setGovernmentId(e.target.value)} placeholder="GOV-123456" className="h-12 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-success focus:ring-4 focus:ring-success/15" /></label> : null}
+      {role === 'manufacturer' ? <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Company ID<input required value={companyId} onChange={(e) => setCompanyId(e.target.value)} placeholder="COMP-123456" className="h-12 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-success focus:ring-4 focus:ring-success/15" /></label> : null}
       <button type="button" onClick={google} className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-surface px-4 text-base font-medium text-ink shadow-sm transition hover:bg-bg focus:outline-none focus:ring-4 focus:ring-brand/15"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-lg font-bold text-brand shadow-sm">G</span>Continue with Google</button>
       <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wide text-muted"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
     </div> : <p className="mb-4 rounded-md border border-border bg-bg px-3 py-2 text-sm text-muted">Registering as <span className="font-semibold capitalize text-ink">{role}</span>.</p>}
     <form className="space-y-4" onSubmit={submit}>
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Email address<input required disabled={verified} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@organization.com" className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand disabled:bg-bg" /></label>
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Email address<input required disabled={verified} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@organization.com" className="h-12 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-success focus:ring-4 focus:ring-success/15 disabled:bg-bg" /></label>
       {verified ? <>
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">{role === 'manufacturer' ? 'Company / organization name' : 'Full name'}<input required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={role === 'manufacturer' ? 'Organization name' : 'Your full name'} className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand" /></label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Create password<input required type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Create a password" className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand" /></label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Confirm password<input required type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" className="h-10 rounded-md border border-border bg-surface px-3 text-sm font-normal outline-none transition focus:border-brand" /></label>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">{role === 'manufacturer' ? 'Company / organization name' : 'Full name'}<input required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={role === 'manufacturer' ? 'Organization name' : 'Your full name'} className="h-12 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-success focus:ring-4 focus:ring-success/15" /></label>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Create password<PasswordInput value={password} onChange={setPassword} autoComplete="new-password" placeholder="Create a password" /></label>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-ink">Confirm password<PasswordInput value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" placeholder="Re-enter your password" /></label>
       </> : null}
       {error ? <AuthError>{error}</AuthError> : null}
       <button disabled={loading} className="h-12 w-full rounded-xl bg-success text-base font-semibold text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-success/25 disabled:cursor-not-allowed disabled:opacity-60">{loading ? (verified ? 'Creating account…' : 'Sending code…') : (verified ? 'Create account' : 'Send verification code')}</button>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { AuthError, AuthLayout } from './AuthLayout'
+import { PasswordInput } from './PasswordInput'
 import { RoleSelector, type AuthRole } from './RoleSelector'
 
 export function LoginPage() {
@@ -26,12 +27,12 @@ export function LoginPage() {
     window.location.assign(`http://127.0.0.1:8000/api/auth/google?${new URLSearchParams({ role, mode: 'login' })}`)
   }
 
-  return <AuthLayout eyebrow="Account access" title="Welcome back" description="Sign in to continue to your compliance workspace.">
+  return <AuthLayout>
     <p className="mb-2 text-sm font-semibold text-ink">Sign in as</p>
     <RoleSelector value={role} onChange={(selectedRole) => { setRole(selectedRole); setError('') }} />
     <form className="mt-6 space-y-4" onSubmit={submit}>
       <label className="flex flex-col gap-2 text-sm font-medium text-ink">Email address<input required type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@organization.com" className="h-13 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15" /></label>
-      <label className="flex flex-col gap-2 text-sm font-medium text-ink">Password<input required type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" className="h-13 rounded-xl border border-border bg-surface px-4 text-base font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15" /></label>
+      <label className="flex flex-col gap-2 text-sm font-medium text-ink">Password<PasswordInput value={password} onChange={setPassword} autoComplete="current-password" placeholder="Enter your password" /></label>
       {error ? <AuthError>{error}</AuthError> : null}
       <button disabled={loading || googleLoading} className="h-13 w-full rounded-xl bg-success px-4 text-base font-semibold text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-success/25 disabled:cursor-not-allowed disabled:opacity-60">{loading ? 'Signing in…' : 'Login'}</button>
     </form>

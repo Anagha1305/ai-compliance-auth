@@ -9,7 +9,7 @@ const labels: Record<AuthRole, string> = {
 }
 
 export function RoleSelector({ value, onChange }: { value: AuthRole | null; onChange: (role: AuthRole) => void }) {
-  return <div className="grid grid-cols-3 overflow-hidden rounded-md border border-border bg-bg" role="group" aria-label="Account type">
-    {AUTH_ROLES.map((role) => <button key={role} type="button" onClick={() => onChange(role)} aria-pressed={value === role} className={`min-h-10 border-r border-border px-2 text-xs font-semibold transition last:border-r-0 sm:text-sm ${value === role ? 'bg-brand text-white' : 'bg-surface text-muted hover:bg-bg hover:text-ink'}`}>{labels[role]}</button>)}
+  return <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-emerald-100 bg-emerald-50/70 p-1" role="group" aria-label="Account type">
+    {AUTH_ROLES.map((role) => <button key={role} type="button" onClick={() => onChange(role)} aria-pressed={value === role} className={`min-h-11 rounded-lg px-2 text-xs font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-success/40 sm:text-sm ${value === role ? 'bg-success text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:text-navy'}`}>{labels[role]}</button>)}
   </div>
 }
